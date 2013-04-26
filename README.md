@@ -19,20 +19,28 @@ timing information to a host computer via the RS232 serial link.  The
 data format is designed to closely match that of the LIRC
 (www.lirc.org) UDP driver.
 
-Host part
-----------
-The second part of the project is a small program (avrlirc2udp.c) which
+Host part(s)
+------------
+The second part of the project is a host daemon which
 reads the avrlirc data stream from the serial port and relays it (via a
-UDP socket connection) to a listening lircd daemon.  Such a daemon
-would be started using the commandline:
+UDP socket connection) to a listening lircd daemon, which would
+be started using a commandline like:
 
     lircd --driver=udp [ with optional --device=<port-number> ]
 
-Another version of the host daemon is also provided here.  airboard-ir.c
-implements all of the functions of avrlirc2udp.c, and also adds
+There are two versions of the host relay daemon included here:
+
+The simpler one, avrlirc2udp.c, does everything one might need for
+simple remote control handling.
+
+The other host daemon, airboard-ir.c, implements all of that plus full
 support for infrared (IR) data from an Airboard keyboard, also known
 as an SK-7100, made by Silitek, or LiteOn, and rebadged by Motorola
-and gateway, perhaps among others.
+and gateway, perhaps among others.  These keyboards come with a
+receiver equipped with a PS/2 keyboard jack and a *serial* mouse
+connector.  Using airboard-ir with an avrlirc receiver has obvious
+advantages, in addition to which it gives flexible support for the
+"special" hotkeys on the Airboard.
 
 Advantages
 ----------
@@ -81,13 +89,11 @@ probably isn't necessary, since most consumer-grade serial ports these
 days will accept TTL-level pseudo-RS232 signalling.  But a line driver
 like the Maxim MAX233 can be used if necessary.
 
-It's possible that the 38400 baud rate may be too slow to fully support
-some IR remotes, which may have shorter bit pulses, or faster button
-repeat rates.  In this case, a crystal and capacitors will be necessary
-to run the AVR at a rate (like 11.0592 or 14.7456Mhz) which accurately
-supports higher speeds.  At higher speeds, you'll probably need to use
-the atmel's txd directly, connected via an RS232 line driver (max232 or
-equiv).
+The 38400 baud rate seems to be fast enough to support any remotes
+I've tried.  If it weren't, one might have to resort to adding a
+crystal (and capacitors) to run the AVR micro faster.  At higher
+speeds, you'll probably need to use the atmel's txd directly,
+connected via an RS232 line driver (max232 or equiv).
 
 If pin 7 on the ATtiny2313 is grounded, the code will emit a stream of
 'U' characters on the serial port, useful for debugging the

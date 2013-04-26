@@ -22,6 +22,8 @@ CFLAGS += -Wa,-adhlns=$(<:%.c=%.lst)
 LFLAGS = -mmcu=$(MCU)
 
 HOSTCC = gcc
+# HCFLAGS = -DPERSONAL_HACKS
+HCFLAGS = -DVERSION=$(VERSION) -DPERSONAL_HACKS
 
 PROG = avrlirc
 SRCS = avrlirc.c
@@ -31,7 +33,7 @@ VERSION = $(shell date +%y%m%d-%H%M)
 CFLAGS += -DAVRLIRC_VERSION="\"$(VERSION)\""
 
 
-all: $(PROG).hex $(PROG).lss avrlirc2udp 
+all: $(PROG).hex $(PROG).lss avrlirc2udp airboard-ir
 
 $(PROG).out: $(OBJS)
 	@-test -f $(PROG).out && (echo size was: ; $(SIZE) $(PROG).out)
@@ -57,7 +59,30 @@ sizes: $(OBJS)
 	$(SIZE) $(PROG).out
 
 avrlirc2udp: avrlirc2udp.c
-	$(HOSTCC) -O2 -Wall avrlirc2udp.c -o avrlirc2udp
+	$(HOSTCC) $(HCFLAGS) -Wall avrlirc2udp.c -o avrlirc2udp
+
+airboard-ir:	airboard-ir.c
+	$(HOSTCC) $(HCFLAGS) -O2 -Wall airboard-ir.c -o airboard-ir
+
+# convenience target for upgrading on multiple machines
+install-airboard-ir: $(PROG) ab-installscript
+	for h in kousa moss phlox lily pansy;\
+	do \
+	    echo $$h ;\
+	    scp $(PROG) ab-installscript $$h:/tmp ;\
+	    ssh -t olpc@$$h sudo sh /tmp/ab-installscript ;\
+	done
+	for h in jade ivy ;\
+	do \
+	    echo $$h ;\
+	    scp $(PROG) ab-installscript $$h:/tmp ;\
+	    ssh -t pgf@$$h sudo sh /tmp/ab-installscript ;\
+	done
+
+ab-installscript:
+	echo 'set -x; cd /usr/local/bin; mv $(PROG) $(PROG).old; mv /tmp/$(PROG) . ; killall $(PROG)' >ab-installscript
+	chmod a+x ab-installscript
+
  
 tarball: all clean
 	mkdir -p oldfiles
@@ -73,10 +98,6 @@ tarball: all clean
 	mv ../avrlirc-$(VERSION).tar.gz .
 	rm -f ../avrlirc-$(VERSION)
 
-foo.out: foo.o
-	$(LD) -o $@ $(LFLAGS) foo.o
-	$(NM) -n $@ >foo.map
-
 program:
 	sudo avrdude -p t2313 -c sp12 -U avrlirc.hex  -E noreset
 
@@ -84,7 +105,8 @@ bod_fuses:  # brown-out detection
 	sudo avrdude -p t2313 -c sp12 -U lfuse:w:0x64:m -U hfuse:w:0xd7:m -E noreset
 
 clean:
-	rm -f *.o *.flash *.flash.* *.out *.map *.lst *.lss avrlirc2udp
+	rm -f *.o *.flash *.flash.* *.out *.map *.lst *.lss
+	rm -f avrlirc2udp airboard-ir ab-installscript
 	
 clobber: clean
 	rm -f avrlirc.hex

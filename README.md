@@ -9,14 +9,15 @@ IR commands to an lircd daemon locally or elsewhere on the network.
 AVR part
 --------
 
-The first is a simple program (avrlirc.c) that runs on an ATTiny2313
-AVR microcontroller, or probably many others, without much work -- an
-onboard hardware-based UART is the main requirement.  (The 16-bit timer
-and the input capture register are used as well.)  The code monitors the
-pulse stream from a standard IR receiver (similar to the Panasonic
-PNA4602M or Sharp GP1UD261XK0F), and sends the pulse timing information
-to a host computer via the RS232 serial link.  The data format is
-designed to closely match that of the LIRC (www.lirc.org) UDP driver.
+The first part is a simple program (avrlirc.c) that runs on an
+ATTiny2313 AVR microcontroller, or probably many others, without much
+work -- an onboard hardware-based UART is the main requirement.  (The
+16-bit timer and the input capture register are used as well.) The
+code monitors the pulse stream from a standard IR receiver (similar to
+the Panasonic PNA4602M or Sharp GP1UD261XK0F), and sends the pulse
+timing information to a host computer via the RS232 serial link.  The
+data format is designed to closely match that of the LIRC
+(www.lirc.org) UDP driver.
 
 Host part
 ----------
@@ -27,43 +28,44 @@ would be started using the commandline:
 
     lircd --driver=udp [ with optional --device=<port-number> ]
 
+Another version of the host daemon is also provided here.  airboard-ir.c
+implements all of the functions of avrlirc2udp.c, and also adds
+support for infrared (IR) data from an Airboard keyboard, also known
+as an SK-7100, made by Silitek, or LiteOn, and rebadged by Motorola
+and gateway, perhaps among others.
+
 Advantages
 ----------
 
-    - Unlike the traditional LIRC "home-brew" serial port IR dongle, or
-	even newer USB-based dongles, there is no requirement here for
-	a special kernel driver.  Any serial port capable of at least
-	38400 baud can be used, including USB-to-serial converters
-	(which can also provide a convenient source of 5V power for the
-	AVR micro).
+- Unlike the traditional LIRC "home-brew" serial port IR dongle, or
+    even newer USB-based dongles, there is no requirement here for
+    a special kernel driver.  Any serial port capable of at least
+    38400 baud can be used, including USB-to-serial converters
+    (which can also provide a convenient source of 5V power for the
+    AVR micro).
 
-    - Unlike some other AVR-based solutions (which mostly connect via
-	USB), there is no need for a new type of config -- the same
-	lircd.conf file used for the home-brew receivers will work with
-	this.  Nor is there a need for a special kernel driver.
+- Unlike some other AVR-based solutions (which mostly connect via
+    USB), there is no need for a new type of config -- the same
+    lircd.conf file used for the home-brew receivers will work with
+    this.  Nor is there a need for a special kernel driver.
 
-    - Thanks to the UDP network connection the serial port to which the
-	avrlirc device is connected need not be on the same machine as
-	the lircd process that is interpreting its data.  In my case, I
-	have IR receivers attached to several workstations, all of
-	which control processes (for home automation, and home audio)
-	which run on a central server.  Using avrlirc, the lircd
-	daemons can all run on the the central server (each listening
-	on a differnt port) which simplifies configuration changes.
+- Thanks to the UDP network connection the serial port to which the
+    avrlirc device is connected need not be on the same machine as
+    the lircd process that is interpreting its data.  In my case, I
+    have IR receivers attached to several workstations, all of
+    which control processes (for home automation, and home audio)
+    which run on a central server.  Using avrlirc, the lircd
+    daemons can all run on the the central server (each listening
+    on a differnt port) which simplifies configuration changes.
 
 Building the code
 -----------------
-The AVR code was written using avr-gcc (gcc 4.1.1).  The Makefile
-assumes a UNIX/Linux system -- if using WinAVR, a new Makefile may well
-be required, but its contents are trivial.  A compiled version of the
-code (avrlirc-NNNN.hex) is provided for those without the avr-gcc
-toolchain -- it was built to be run on an ATTiny2313 using the
-calibrated internal 8Mhz oscillator.  Loading the hex file into the
-microcontroller, however, is beyond the scope of this README.  :-)
+The AVR code was written using avr-gcc -- the Makefile is pretty simple.
+Loading the hex file into the microcontroller, however, is beyond the
+scope of this README.  :-)
 
 The avrlirc2udp program assumes POSIX termio access for controlling
-access to the serial port.  I have no idea how one might accomplish
-this control using win32, though I'm sure it must be possible.
+access to the serial port.
 
 There's another program I wrote, based on avrlirc2udp, which is useful
 if you have a certain model of IR wireless keyboard, since it handles

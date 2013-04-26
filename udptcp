@@ -1,0 +1,56 @@
+#!/bin/sh -x
+
+usage()
+{
+    echo "usage: ${0##*/} -U <udpport> " \
+    	"-T <tcpport> -h host {udp2tcp|tcp2udp}"  >&2
+    exit 1
+}
+
+test "$1" || usage
+
+while test "$1"
+do
+    case $1 in
+    -U)  test "$2" || usage
+	 udpport=$2
+	 shift
+	 ;;
+    -T)  test "$2" || usage
+	 tcpport=$2
+	 shift
+	 ;;
+    -h)  test "$2" || usage
+	 host=$2
+	 shift
+	 ;;
+    udp2tcp)
+	 to_tcp=true
+	 ;;
+    tcp2udp)
+	 to_tcp=;
+	 ;;
+    *)
+	 usage
+	 ;;
+    esac
+    shift
+done
+
+test "$udpport" || usage
+test "$tcpport" || usage
+test "$host" || usage
+
+
+if [ "$to_tcp" ]
+then
+    while :
+    do
+	nc -l -u -p $udpport | nc $host $tcpport
+    done
+else
+    while :
+    do
+	nc -l -p $tcpport | nc -u $host $udpport
+    done
+fi

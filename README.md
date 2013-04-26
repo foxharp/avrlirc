@@ -67,7 +67,8 @@ support for infrared (IR) keystroke and mouse data from an Airboard
 keyboard, also known as a Liteon, or an SK-7100, made by Silitek.  The
 keyboard has been rebadged by Motorola and Gateway, perhaps others. 
 It forwards the user input data to the linux kernel, and forwards the
-IR data to an instance of lircd. ![ airboard ]( pix/airboard.jpg )
+IR data to an instance of lircd.
+<a href="pix/airboard.jpg"> <img src="pix/airboard_thmb.jpg" ></a>
 
 Output from this program goes to three separate destinations:
 

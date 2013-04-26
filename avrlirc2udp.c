@@ -88,7 +88,7 @@ void
 report(char *s)
 {
     if (daemonized)
-	syslog(LOG_NOTICE, s);
+	syslog(LOG_NOTICE, "%s", s);
     else
 	fprintf(stderr, "%s\n", s);
 }
@@ -126,7 +126,7 @@ int socket_init(int tcp, char *host, int port)
 	    die("socket");
     }
 
-    memset((char *) sa, sizeof(*sa), 0);
+    memset((char *) sa, 0, sizeof(*sa));
     sa->sin_family = AF_INET;
     sa->sin_port = htons(port);
     sa->sin_addr = *((struct in_addr *)hent->h_addr);
@@ -246,7 +246,9 @@ data_loop(int from, int tcp, char *host, int port)
     unsigned char b[2];
     int n;
     int prevhighbit = -1;
+#if OUT_OF_BAND_SOMEDAY
     int prevwaszero;
+#endif
     int highbit;
     static int to = -1;
 
@@ -318,7 +320,9 @@ data_loop(int from, int tcp, char *host, int port)
 	    highbit = (b[1] & 0x80);
 	}
 	prevhighbit = highbit;
+#if OUT_OF_BAND_SOMEDAY
 	prevwaszero = (b[1] == 0);
+#endif
 
 	if (debug != DEBUG_ONLY)  { // sending to host
 	    if (to < 0)

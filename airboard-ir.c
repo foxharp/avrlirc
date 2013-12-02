@@ -678,9 +678,11 @@ void emitkey(long ir_code)
     if (!keyp) return;
 
     if (keyp->type == TYPE_ALL_UP) {
+        dbg(1, "got all-up");
         /* cancel all outstanding keypresses, for safety */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (key_pressed[i]) {
+                dbg(1, "forcing %d / %s up", i, key_pressed[i]->name);
                 if (!noxmit)
                     send_a_key(key_pressed[i]->event_code, 0);
                 key_pressed[i] = 0;
@@ -708,7 +710,9 @@ void emitkey(long ir_code)
         /* record what's pressed */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (!key_pressed[i]) {
+                dbg(1, "marking %s pressed at %d", keyp->name, i);
                 key_pressed[i] = keyp;
+                break;
             }
         }
 
@@ -728,6 +732,7 @@ void emitkey(long ir_code)
         /* keep track of what's been released */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (key_pressed[i] == keyp) {
+                dbg(1, "marking %s released at %d", keyp->name, i);
                 key_pressed[i] = 0;
                 break;
             }

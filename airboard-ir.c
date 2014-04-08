@@ -679,6 +679,7 @@ void emitkey(long ir_code)
 
     if (keyp->type == TYPE_ALL_UP) {
         dbg(1, "got all-up");
+        if (0) dbg(1, "skipping");
         /* cancel all outstanding keypresses, for safety */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (key_pressed[i]) {
@@ -698,18 +699,25 @@ void emitkey(long ir_code)
 
         dbg(1, "%s pressed", keyp->name);
 
-        if (do_grabscroll && keyp->type == TYPE_GRAB) {
-            set_scrolling();
-        } else if (!noxmit) {
-            if (spec_host && keyp->type == TYPE_SPECIAL)
-                send_hotkey(keyp->name);
-            else
-                send_a_key(keyp->event_code, 1);
+        /* check for already pressed */
+        for (i = 0; i < N_KEYS_PRESSED; i++) {
+            if (key_pressed[i] == keyp) {
+                dbg(1, "ignoring %s already pressed at %d", keyp->name, i);
+                return;
+            }
         }
-
         /* record what's pressed */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (!key_pressed[i]) {
+                if (do_grabscroll && keyp->type == TYPE_GRAB) {
+                    set_scrolling();
+                } else if (!noxmit) {
+                    if (spec_host && keyp->type == TYPE_SPECIAL)
+                        send_hotkey(keyp->name);
+                    else
+                        send_a_key(keyp->event_code, 1);
+                }
+
                 dbg(1, "marking %s pressed at %d", keyp->name, i);
                 key_pressed[i] = keyp;
                 break;
@@ -718,24 +726,30 @@ void emitkey(long ir_code)
 
     } else if (keyp->ir_code == (ir_code ^ IR_UP_MASK)) {
 
+        int mark_released = 0;
+
         dbg(1, "%s released", keyp->name);
 
-        if (do_grabscroll && keyp->type == TYPE_GRAB) {
-            reset_scrolling();
-        } else if (!noxmit) {
-            if (spec_host && keyp->type == TYPE_SPECIAL)
-                ;
-            else
-                send_a_key(keyp->event_code, 0);
-        }
 
         /* keep track of what's been released */
         for (i = 0; i < N_KEYS_PRESSED; i++) {
             if (key_pressed[i] == keyp) {
+                if (do_grabscroll && keyp->type == TYPE_GRAB) {
+                    reset_scrolling();
+                } else if (!noxmit) {
+                    if (spec_host && keyp->type == TYPE_SPECIAL)
+                        ;
+                    else
+                        send_a_key(keyp->event_code, 0);
+                }
                 dbg(1, "marking %s released at %d", keyp->name, i);
+                mark_released = 1;
                 key_pressed[i] = 0;
                 break;
             }
+        }
+        if (!mark_released) {
+            dbg(1, "no matching press for %s release, ignoring", keyp->name);
         }
 
     } else {

@@ -1386,14 +1386,14 @@ key_desc_t keys[NUM_KEYS] = {
     { 0x00000, "",              0,              0 },
 #if PERSONAL_HACKS
     { 0x59eac, "capcontrol",    KEY_LEFTCTRL,   0 },
-    { 0x5aeaa, "fake btn",      BTN_MIDDLE,     TYPE_MOUSE },
+    { 0x5aeaa, "fake_btn",      BTN_MIDDLE,     TYPE_MOUSE },
 #else
     { 0x59eac, "capslock",      KEY_CAPSLOCK,   0 },
     { 0x5aeaa, "pause_break",   KEY_PAUSE,      0 },
 #endif
     { 0x5bea8, "r_alt",         KEY_RIGHTALT,   0 },
     { 0x5cea6, "leftmeta",      KEY_LEFTMETA,   0 },
-    { 0x5dea4, "all up!",       0,              TYPE_ALL_UP },
+    { 0x5dea4, "all_up!",       0,              TYPE_ALL_UP },
     { 0x5eea2, "esc",           KEY_ESC,        0 },
     { 0x5fea0, "key_z",         KEY_Z,          0 },
     { 0x60ede, "home",          KEY_HOME,       0 },

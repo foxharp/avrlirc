@@ -207,15 +207,15 @@ volatile word pulse_length;
 volatile byte pulse_is_high;
 volatile byte had_overflow;
 
-static prog_char version_s[] = AVRLIRC_VERSION "$Revision: 1.52 $";
-static prog_char fox_s[] = "The Quick Brown Fox Jumped Over the Lazy Dog's Back\r\n";
+static const char version_s[] PROGMEM = AVRLIRC_VERSION "$Revision: 1.52 $";
+static const char fox_s[] PROGMEM = "The Quick Brown Fox Jumped Over the Lazy Dog's Back\r\n";
 
 #if DO_RECEIVE
-static prog_char error_s[] = "try (h)elp";
-static prog_char usage_s[] = "Asc Bin Ir Vers";
-static prog_char ascii_s[] = "ascii";
-static prog_char binary_s[] = "binary";
-static prog_char crnl_s[] = "\r\n";
+static const char error_s[] PROGMEM = "try (h)elp";
+static const char usage_s[] PROGMEM = "Asc Bin Ir Vers";
+static const char ascii_s[] PROGMEM = "ascii";
+static const char binary_s[] PROGMEM = "binary";
+static const char crnl_s[] PROGMEM = "\r\n";
 volatile byte ascii;
 
 #endif
@@ -414,7 +414,7 @@ tx_hexword(word v)
 #endif
 
 void
-tx_str_p(const prog_char *s)
+tx_str_p(const char *s)
 {
     char c;
 
@@ -682,7 +682,7 @@ main(void)
 		tx_str_p(version_s);
 		tx_str_p(fox_s);
 	    } else {
-		tx_char('U');
+		tx_char('U');  /* square wave */
 	    }
 	}
 	/* not reached */

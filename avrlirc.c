@@ -12,9 +12,9 @@
  *              xtal2,pa1 |4       17| pb5,pci5,mosi  (mosi, for prog)
  *              xtal1,pa0 |5       16| pb4,pci4,oc1b  (txout, from pin 3)
  * (gnd for Fox) int0,pd2 |6       15| pb3,pci3,oc1a  (/txout, to DB9-2)
- *   (gnd for enable) pd3 |7       14| pb2,pci2,oc0a
- *  (dbg led #2)   t0,pd4 |8       13| pb1,pci1,ain1
- *  (act led #1)   t1,pd5 |9       12| pb0,pci0,ain0  (gnd for UUUUUU)
+ *   (gnd for enable) pd3 |7       14| pb2,pci2,oc0a  (gnd for UUUUUU)
+ *  (dbg led #2)   t0,pd4 |8       13| pb1,pci1,ain1  (acts as Vcc for IR-Recv)
+ *  (act led #1)   t1,pd5 |9       12| pb0,pci0,ain0  (acts as GND for IR-Recv)
  *  (db-9 pin 5)      Gnd |10      11| pd6,icp        (input, IR-Recv))
  *                         ----------
  *                                     (pins 12-19 available as inputs)
@@ -162,9 +162,9 @@ typedef uint8_t byte;
 /*
  * GPIO usage
  */
-#define DO_DEBUG	PB0   // pin 12, input:  ground to force debug loop
-// #define unused	PB1
-// #define unused	PB2
+#define IR_GND		PB0
+#define IR_VCC		PB1
+#define DO_DEBUG	PB2   // pin 12, input:  ground to force debug loop
 #define TX_INVERT_OUT	PB3
 #define TX_INVERT_IN	PB4
 // #define MOSI_BITNUM	PB5   // pin17, MOSI, input
@@ -186,7 +186,7 @@ typedef uint8_t byte;
 #define Led2_Off()	{ PORTD |=	 bit(LED2_BITNUM); }
 #define Led2_On()	{ PORTD &=      ~bit(LED2_BITNUM); }
 #define Led2_Flip()	{ PORTD ^=	 bit(LED2_BITNUM); }
-#define IR_high()	(PIND & bit(IRREC_BITNUM))
+#define IR_is_high()	(PIND & bit(IRREC_BITNUM))
 #define do_fox()	((PIND & bit(DO_FOX)) == 0)
 #define output_enabled() ((PIND & bit(OUTPUT_ENABLE)) == 0)
 
@@ -252,13 +252,17 @@ hw_init(void)
     CLKPR = 0;
 
 
-    // setup outputs
+    // setup outputs and pullups
 
     // port B
-    DDRB = bit(TX_INVERT_OUT);	// just one output bit
+    DDRB = bit(TX_INVERT_OUT);
+    DDRB |= bit(IR_VCC);
+    DDRB |= bit(IR_GND);
+    PORTB |= bit(IR_VCC);
+    PORTB &= ~bit(IR_GND);
     // PORTB |= bit(TX_INVERT_IN);	// enable pull-up on input
     PORTB |= bit(TX_INVERT_OUT); // set output high
-    PORTB |= bit(DO_DEBUG);
+    PORTB |= bit(DO_DEBUG);	 // enable pull-up
 
     // port D -- just leds are outputs
     DDRD |= bit(LED1_BITNUM);
@@ -457,7 +461,7 @@ tx_word(word t)
 INTERRUPTIBLE_ISR(TIMER1_OVF_vect)
 {
     byte tmp;
-    if (IR_high())
+    if (IR_is_high())
 	tmp = 0xff;  // high byte of eventual dummy pulselen
     else
 	tmp = 0x7f;
@@ -488,7 +492,7 @@ INTERRUPTIBLE_ISR(TIMER1_CAPT_vect)
     // read the event
     pulse_length = ICR1;
     // and save the new state of the IR line.
-    pulse_is_high = IR_high();
+    pulse_is_high = IR_is_high();
 
     // restart the timer
     TCNT1 = 0;
@@ -567,7 +571,7 @@ ISR(USART_RX_vect)
 	ascii = 0;
 	return;
     case 'i':
-	tx_char(IR_high() ? '1':'0');
+	tx_char(IR_is_high() ? '1':'0');
 	break;
     case 'm':
 	tx_hexword(mcusr_mirror);	/* reset reason, etc */

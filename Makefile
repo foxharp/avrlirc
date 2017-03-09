@@ -99,7 +99,9 @@ tarball: all clean
 	rm -f ../avrlirc-$(VERSION)
 
 program:
-	sudo avrdude -p t2313 -c usbtiny -U avrlirc.hex  -E noreset
+	scp avrlirc.hex broom:/tmp
+	ssh -t broom sudo avrdude -p t2313 -c usbtiny -U /tmp/avrlirc.hex  -E noreset
+#	sudo avrdude -p t2313 -c usbtiny -U avrlirc.hex  -E noreset
 
 bod_fuses:  # brown-out detection
 	sudo avrdude -p t2313 -c usbtiny -U lfuse:w:0x64:m -U hfuse:w:0xd7:m -E noreset

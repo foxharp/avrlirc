@@ -9,12 +9,12 @@
  *  (rst for prog) /reset |1       20| Vcc
  *  (dbg only)    rxd,pd0 |2       19| pb7,pci7,scl   (scl, for prog)
  *  (to pin 16)   txd,pd1 |3       18| pb6,pci6,miso  (miso, for prog)
- *              xtal2,out |4       17| pb5,pci5,mosi  (mosi, for prog)
- *              xtal1,in  |5       16| pb4,pci4,oc1b  (txout, from pin 3)
- *               int0,pd2 |6       15| pb3,pci3,oc1a  (/txout, to DB9-2)
- * (gnd for 'U' loop) pd3 |7       14| pb2,pci2,oc0a
+ *              xtal2,pa1 |4       17| pb5,pci5,mosi  (mosi, for prog)
+ *              xtal1,pa0 |5       16| pb4,pci4,oc1b  (txout, from pin 3)
+ * (gnd for Fox) int0,pd2 |6       15| pb3,pci3,oc1a  (/txout, to DB9-2)
+ *   (gnd for enable) pd3 |7       14| pb2,pci2,oc0a
  *  (dbg led #2)   t0,pd4 |8       13| pb1,pci1,ain1
- *  (act led #1)   t1,pd5 |9       12| pb0,pci0,ain0
+ *  (act led #1)   t1,pd5 |9       12| pb0,pci0,ain0  (gnd for UUUUUU)
  *  (db-9 pin 5)      Gnd |10      11| pd6,icp        (input, IR-Recv))
  *                         ----------
  *                                     (pins 12-19 available as inputs)
@@ -162,7 +162,7 @@ typedef uint8_t byte;
 /*
  * GPIO usage
  */
-// #define unused	PB0
+#define DO_DEBUG	PB0   // pin 12, input:  ground to force debug loop
 // #define unused	PB1
 // #define unused	PB2
 #define TX_INVERT_OUT	PB3
@@ -174,9 +174,9 @@ typedef uint8_t byte;
 // #define RX_BITNUM	PD0   // pin 1
 // #define TX_BITNUM	PD1   // pin 2
 #define DO_FOX		PD2   // pin 6
-#define DO_DEBUG	PD3   // pin 7, input:  ground to force debug loop
-#define LED2_BITNUM	PD4   // pin 8, output
-#define LED1_BITNUM	PD5   // pin 9, output
+#define OUTPUT_ENABLE  	PD3   // pin 7, input:  ground to enable output
+#define LED2_BITNUM	PD4   // pin 8, output (debug LED)
+#define LED1_BITNUM	PD5   // pin 9, output (activity LED)
 #define IRREC_BITNUM	PD6   // pin 11 -- input:  from IR receiver
 
 /* hardware access macros */
@@ -187,8 +187,10 @@ typedef uint8_t byte;
 #define Led2_On()	{ PORTD &=      ~bit(LED2_BITNUM); }
 #define Led2_Flip()	{ PORTD ^=	 bit(LED2_BITNUM); }
 #define IR_high()	(PIND & bit(IRREC_BITNUM))
-#define do_debug()	((PIND & bit(DO_DEBUG)) == 0)
 #define do_fox()	((PIND & bit(DO_FOX)) == 0)
+#define output_enabled() ((PIND & bit(OUTPUT_ENABLE)) == 0)
+
+#define do_debug()	((PINB & bit(DO_DEBUG)) == 0)
 
 // values for TCCR1B
 #define CLKDIV_8    2
@@ -256,6 +258,7 @@ hw_init(void)
     DDRB = bit(TX_INVERT_OUT);	// just one output bit
     // PORTB |= bit(TX_INVERT_IN);	// enable pull-up on input
     PORTB |= bit(TX_INVERT_OUT); // set output high
+    PORTB |= bit(DO_DEBUG);
 
     // port D -- just leds are outputs
     DDRD |= bit(LED1_BITNUM);
@@ -265,7 +268,7 @@ hw_init(void)
     PORTD |= bit(LED2_BITNUM);
     // enable pullup on IR recvr, and on the debug-mode pin
     PORTD |= bit(IRREC_BITNUM);
-    PORTD |= bit(DO_DEBUG);
+    PORTD |= bit(OUTPUT_ENABLE); // turn on pullup on output enable
     PORTD |= bit(DO_FOX);
 
     // set up pin-change interrupt for doing inversion on uart TX
@@ -363,6 +366,9 @@ void
 tx_char(byte t)
 {
     byte tmp;
+
+    if (!output_enabled())
+	return;
 
     tmp = (tx_w + 1) & TX_QLEN_MASK;
 
@@ -683,6 +689,7 @@ main(void)
 		tx_str_p(fox_s);
 	    } else {
 		tx_char('U');  /* square wave */
+		Led2_Flip();
 	    }
 	}
 	/* not reached */

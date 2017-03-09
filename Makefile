@@ -23,7 +23,7 @@ LFLAGS = -mmcu=$(MCU)
 
 HOSTCC = gcc
 # HCFLAGS = -DPERSONAL_HACKS
-HCFLAGS = -DVERSION="\"$(VERSION)\"" -DPERSONAL_HACKS -m32
+HCFLAGS = -DVERSION="\"$(VERSION)\"" -DPERSONAL_HACKS
 
 PROG = avrlirc
 SRCS = avrlirc.c
@@ -99,10 +99,10 @@ tarball: all clean
 	rm -f ../avrlirc-$(VERSION)
 
 program:
-	sudo avrdude -p t2313 -c sp12 -U avrlirc.hex  -E noreset
+	sudo avrdude -p t2313 -c usbtiny -U avrlirc.hex  -E noreset
 
 bod_fuses:  # brown-out detection
-	sudo avrdude -p t2313 -c sp12 -U lfuse:w:0x64:m -U hfuse:w:0xd7:m -E noreset
+	sudo avrdude -p t2313 -c usbtiny -U lfuse:w:0x64:m -U hfuse:w:0xd7:m -E noreset
 
 clean:
 	rm -f *.o *.flash *.flash.* *.out *.map *.lst *.lss

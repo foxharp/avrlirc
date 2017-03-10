@@ -6,21 +6,22 @@
  *
  * AVR ATTiny2313 pinout :
  *                         ----------
- *  (rst for prog) /reset |1       20| Vcc
- *  (dbg only)    rxd,pd0 |2       19| pb7,pci7,scl   (scl, for prog)
- *  (to pin 16)   txd,pd1 |3       18| pb6,pci6,miso  (miso, for prog)
+ *  (rst for prog) /reset |1     + 20| Vcc
+ *  (dbg only)    rxd,pd0 |2 +     19| pb7,pci7,scl   (scl, for prog)
+ *  (to pin 16)   txd,pd1 |3 +     18| pb6,pci6,miso  (miso, for prog)
  *              xtal2,pa1 |4       17| pb5,pci5,mosi  (mosi, for prog)
  *              xtal1,pa0 |5       16| pb4,pci4,oc1b  (txout, from pin 3)
  * (gnd for Fox) int0,pd2 |6       15| pb3,pci3,oc1a  (/txout, to DB9-2)
- *   (gnd for enable) pd3 |7       14| pb2,pci2,oc0a  (gnd for UUUUUU)
- *  (dbg led #2)   t0,pd4 |8       13| pb1,pci1,ain1  (acts as Vcc for IR-Recv)
- *  (act led #1)   t1,pd5 |9       12| pb0,pci0,ain0  (acts as GND for IR-Recv)
- *  (db-9 pin 5)      Gnd |10      11| pd6,icp        (input, IR-Recv))
+ *   (gnd for enable) pd3 |7 +     14| pb2,pci2,oc0a  (gnd for UUUUUU)
+ *  (dbg led #2)   t0,pd4 |8     + 13| pb1,pci1,ain1  (acts as Vcc for IR-Recv)
+ *  (act led #1)   t1,pd5 |9     + 12| pb0,pci0,ain0  (acts as GND for IR-Recv)
+ *  (db-9 pin 5)      Gnd |10+   + 11| pd6,icp        (input, IR-Recv))
  *                         ----------
- *                                     (pins 12-19 available as inputs)
+ *			('+' denotes required for operation with CHIP)
  *
  *
  * hardware setup:
+ *
  * ATTiny2313 running from internal 8Mhz osc.  pins 15/16 form a
  * "software inverter" which can be used in place of a hardware
  * RS232 line driver.  (i.e., pin 15 will drive the RS232 RX line
@@ -38,13 +39,11 @@
  * (pin 3) directly, and connect it via an RS232 line driver
  * (max232 or equiv).
  *
- * the IR receiver should be something like the
- * Panasonic PNA4602M (5V), or   (noise?)
- * Sharp GP1UD261XK0F (2.7 - 5.5V), or   (noise?)
- * Sharp GP1UX511QS (5V).   (no noise?)
+ * the IR receiver should be something like the Vishay TSOP3438 (2.5V
+ * to 5.5V) or the Sharp GP1UX511QS (5V only).
  *
- * bare minimum net-list:
- *   at 2313, connect
+ * 1) bare minimum net-list, if connecting to a physical serial port:
+ *    at 2313, connect
  *          pin  3 to pin 16  (connects TXD to the "software inverter")
  *          pin 10 to gnd
  *          pin 11 to the output (Vout) lead from IR detector
@@ -52,16 +51,29 @@
  *          pin 20 to +5
  *          put a .1uf cap between pin 10 and pin 20
  *
- *   if connecting the activity LED:
+ * 2) bare minimum net-list, if connecting to digital I/O lines, as on a $9 CHIP
+ *    computer:
+ *          pin  3 to the RX input on the computer
+ *	    for optional two-way comms, connect pin 2 to computers TX output
+ *          pin 10 to gnd
+ *          pin 11 to the output (Vout) lead from IR detector
+ *          pin 20 to +3.3V
+ *          put a .1uf cap between pin 10 and pin 20
+ *
+ * 3) connect IR receiver to GND and Vcc, or to pins 12 and 13.  these pins are
+ *	    programmed as "low" and "high" respectively, and the 2313 GPIO pins
+ *	    supply plenty of current for powering the IR receiver.
+ *
+ * 4) if connecting the activity LED:
  *          pin 9 to to cathode (short lead or flat side) of the LED
  *          connect anode of LED to 400ohm resistor
- *          connect other end of resistor to +5
+ *          connect other end of resistor to Vcc
  *
- *   at IR detector, refer to the datasheet for you specific
- *   part.  connect a 10uf to 50uf cap between Vcc and gnd, very
- *   close to the detector.
+ * 5) at IR detector, refer to the datasheet for you specific
+ *    part.  connect a 10uf to 50uf cap between Vcc and gnd, very
+ *    close to the detector.  (though i've left it off, with no ill effects)
  *
- *   for the Panasonic PNA4602M and Sharp GP1UX511QS:
+ *   for both the Vishay TSOP3438 and Sharp GP1UX511QS:
  *      +---+
  *      | O |   (looking at the front)
  *      |   |
@@ -70,7 +82,7 @@
  *       123    pin 2 is GND   ('g')
  *       ogV    pin 3 is Vcc   ('V')
  *
- *   (Warning!  the Sharp GP1UD261XK0F has Vcc and GND swapped!)
+ *   (Note!  Some IR receivers swap Vcc and GND)
  *
  *
  * the serial ouptput stream is RS232 data at 38400,8N1.  no flow
@@ -90,23 +102,29 @@
  *       signal directly to your AVR!!!  enable the ability to run
  *       in ascii mode by defining DO_RECEIVE.
  *
- * both LEDs are optional.  Led #1 (pin 9) is somewhat useful --
+ * both the LEDs are optional.  Led #1 (pin 9) is somewhat useful --
  * it indicates activity from the IR receiver.  Led #2 is only
  * used for debugging -- don't populate it unless you're sure you
  * need it.
  *
- * to assist in verifying that the data transmit path is okay,
- * the AVR will transmit an endless stream of 'U' characters if
- * pin 7 is grounded while the chip comes out of reset.  (A stream
- * of ascii 'U' characters appears as a square wave when viewed
- * on an oscilloscope.)  the rest of the interrupts are still active,
- * to allow for testing, but normal data transmission is
- * bypassed.
+ * to assist in verifying that the data transmit path is okay, the AVR
+ * will transmit an endless stream of 'U' characters if pin 14 is
+ * grounded while the chip comes out of reset.  a stream of ascii 'U'
+ * characters appears as a square wave when viewed on an oscilloscope. 
+ * (actually, this is only true if the number of "stop" bits is set to
+ * 1, rather than 2.  we set 2 stop bits by default to to get a pure
+ * square wave, search for "two stop bits" in the code and comment out
+ * the write to UCSRC.) the rest of the interrupts are still active,
+ * to allow for testing, but normal data transmission is bypassed.
+ *
+ * similarly, grounding pin 6 will cause continuous transmission of a
+ * "quick brown fox" message, to further help verify the data path.
  *
  **********
  *
  * Copyright 2002 Karl Bongers (karl@turbobit.com)
  * Copyright 2007 Paul Fox (pgf@foxharp.boston.ma.us)
+ * Copyright 2017 Paul Fox (pgf@foxharp.boston.ma.us)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License as
@@ -144,9 +162,21 @@ typedef uint16_t word;
 typedef uint8_t byte;
 
 /* the UART reception code should probably remain off -- it was really only
- * needed for initial debugging.
+ * needed for initial debugging.  but it works, and could be used to support
+ * adding small bits of code -- e.g., the ability to toggle I/O pins, etc.
+ * enabling it as it stands now costs about 360 bytes.
  */
-#define DO_RECEIVE 0
+#define DO_RECEIVE 1
+
+/* if connecting to the console RX/TX on a $9 CHIP computer, there's a
+ * risk that an IR sequence will cause data on the computer console
+ * while it's booting, thereby halting the boot sequence.  it might
+ * also "fight" with the "login:" message.  so in that case, USE_ENABLE
+ * should be set to 1, and pin 7 should be pulled low by the CHIP computer
+ * after the system has booted, and after the getty program (which controls
+ * the login prompt) has been shut off).
+ */
+#define USE_ENABLE 1
 
 /*
  * speed selection
@@ -174,7 +204,7 @@ typedef uint8_t byte;
 // #define RX_BITNUM	PD0   // pin 1
 // #define TX_BITNUM	PD1   // pin 2
 #define DO_FOX		PD2   // pin 6
-#define OUTPUT_ENABLE  	PD3   // pin 7, input:  ground to enable output
+#define OUTPUT_ENABLE  	PD3   // pin 7, input: ground to enable serial output
 #define LED2_BITNUM	PD4   // pin 8, output (debug LED)
 #define LED1_BITNUM	PD5   // pin 9, output (activity LED)
 #define IRREC_BITNUM	PD6   // pin 11 -- input:  from IR receiver
@@ -188,7 +218,11 @@ typedef uint8_t byte;
 #define Led2_Flip()	{ PORTD ^=	 bit(LED2_BITNUM); }
 #define IR_is_high()	(PIND & bit(IRREC_BITNUM))
 #define do_fox()	((PIND & bit(DO_FOX)) == 0)
-#define output_enabled() ((PIND & bit(OUTPUT_ENABLE)) == 0)
+#if USE_ENABLE
+# define output_enabled() ((PIND & bit(OUTPUT_ENABLE)) == 0)
+#else
+# define output_enabled() (1)
+#endif
 
 #define do_debug()	((PINB & bit(DO_DEBUG)) == 0)
 
@@ -214,7 +248,7 @@ static const char fox_s[] PROGMEM = "The Quick Brown Fox Jumped Over the Lazy Do
 
 #if DO_RECEIVE
 static const char error_s[] PROGMEM = "try (h)elp";
-static const char usage_s[] PROGMEM = "Asc Bin Ir Vers";
+static const char usage_s[] PROGMEM = "Asc Bin Ir Vers Fox Mcuusr";
 static const char ascii_s[] PROGMEM = "ascii";
 static const char binary_s[] PROGMEM = "binary";
 static const char crnl_s[] PROGMEM = "\r\n";
@@ -562,19 +596,18 @@ ISR(USART_RX_vect)
 	ascii = 1;
 	tx_str_p(ascii_s);
 	break;
-	;;
     case 'b':
 	ascii = 0;
 	tx_str_p(binary_s);
 	break;
-    case 'B':		// silent
-	ascii = 0;
-	return;
     case 'i':
 	tx_char(IR_is_high() ? '1':'0');
 	break;
     case 'm':
 	tx_hexword(mcusr_mirror);	/* reset reason, etc */
+	break;
+    case 'f':
+	tx_str_p(fox_s);	/* quick brown fox */
 	break;
     case 'v':
 	tx_str_p(version_s);	/* version */

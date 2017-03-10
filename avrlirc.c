@@ -111,11 +111,8 @@
  * will transmit an endless stream of 'U' characters if pin 14 is
  * grounded while the chip comes out of reset.  a stream of ascii 'U'
  * characters appears as a square wave when viewed on an oscilloscope. 
- * (actually, this is only true if the number of "stop" bits is set to
- * 1, rather than 2.  we set 2 stop bits by default to to get a pure
- * square wave, search for "two stop bits" in the code and comment out
- * the write to UCSRC.) the rest of the interrupts are still active,
- * to allow for testing, but normal data transmission is bypassed.
+ * the rest of the interrupts are still active, to allow for testing,
+ * but normal data transmission is bypassed.
  *
  * similarly, grounding pin 6 will cause continuous transmission of a
  * "quick brown fox" message, to further help verify the data path.
@@ -224,7 +221,7 @@ typedef uint8_t byte;
 # define output_enabled() (1)
 #endif
 
-#define do_debug()	((PINB & bit(DO_DEBUG)) == 0)
+#define do_uuuu()	((PINB & bit(DO_DEBUG)) == 0)
 
 // values for TCCR1B
 #define CLKDIV_8    2
@@ -248,7 +245,7 @@ static const char fox_s[] PROGMEM = "The Quick Brown Fox Jumped Over the Lazy Do
 
 #if DO_RECEIVE
 static const char error_s[] PROGMEM = "try (h)elp";
-static const char usage_s[] PROGMEM = "Asc Bin Ir Vers Fox Mcuusr";
+static const char usage_s[] PROGMEM = "(a)scii (b)inary (i)r (v)ers (f)ox (m)cuusr (U)UUU";
 static const char ascii_s[] PROGMEM = "ascii";
 static const char binary_s[] PROGMEM = "binary";
 static const char crnl_s[] PROGMEM = "\r\n";
@@ -483,6 +480,19 @@ tx_word(word t)
     tx_char((t >> 8) & 0xff);
 }
 
+void
+UUUU_loop()
+{
+    /* to get a uniform square wave, we change the number of stop bits
+     * to just 1.
+     */
+    UCSRC &= ~bit(USBS);
+    for(;;) {
+	wdt_reset();
+	tx_char('U');  /* square wave */
+	Led2_Flip();
+    }
+}
 
 /*
  * timer1 overflow interrupt handler.
@@ -609,6 +619,10 @@ ISR(USART_RX_vect)
     case 'f':
 	tx_str_p(fox_s);	/* quick brown fox */
 	break;
+    case 'U':
+	sei();
+	UUUU_loop();  		/* no return! */
+	break;
     case 'v':
 	tx_str_p(version_s);	/* version */
 	break;
@@ -714,20 +728,20 @@ main(void)
 
     sei();
 
-    if (do_debug() || do_fox()) {
-	/* enter a loop transmitting.  a perfect square wave is useful
-	 * for debugging the TX inversion, and baud rate stability, and
-	 * the quick brown fox message is good for data integrity.
+    if (do_uuuu()) {
+	/* a perfect square wave is useful for debugging the TX
+	 * inversion, and baud rate stability.
+	 */
+	UUUU_loop();	/* no return! */
+    }
+
+    if (do_fox()) {
+	/* a "quick brown fox" message is good for checking data integrity.
 	 */
 	for(;;) {
 	    wdt_reset();
-	    if (do_fox()) {
-		tx_str_p(version_s);
-		tx_str_p(fox_s);
-	    } else {
-		tx_char('U');  /* square wave */
-		Led2_Flip();
-	    }
+	    tx_str_p(version_s);
+	    tx_str_p(fox_s);
 	}
 	/* not reached */
     }

@@ -243,7 +243,7 @@ volatile word pulse_length;
 volatile byte pulse_is_high;
 volatile byte had_overflow;
 
-static const char version_s[] PROGMEM = AVRLIRC_VERSION "$Revision: 1.52 $";
+static const char version_s[] PROGMEM = AVRLIRC_VERSION;
 static const char fox_s[] PROGMEM = "The Quick Brown Fox Jumped Over the Lazy Dog's Back\r\n";
 
 #if DO_RECEIVE

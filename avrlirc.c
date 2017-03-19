@@ -34,10 +34,13 @@
  * 3.  5V supplied from USB serial device, which is also used for
  * serial connection.
  * 
- * for high-speed (115200) operation, use a crystal with a couple
- * 22pf caps.  at high speeds, you'll probably need to use txd
- * (pin 3) directly, and connect it via an RS232 line driver
- * (max232 or equiv).
+ * for high-speed (115200) operation, use a crystal with a couple 22pf
+ * caps.  at high speeds, you'll probably need to use txd (pin 3)
+ * directly, and connect it via an RS232 line driver (max232 or
+ * equiv).  but note that in practice, i've had zero problems that
+ * could be attributed to the baud rate being too low -- i use 38400
+ * baud exclusively, which lets me dispense with the crystal, the caps,
+ * and also means that the chip's fuse settings don't need to be changed.
  *
  * the IR receiver should be something like the Vishay TSOP3438 (2.5V
  * to 5.5V) or the Sharp GP1UX511QS (5V only).
@@ -51,8 +54,8 @@
  *          pin 20 to +5
  *          put a .1uf cap between pin 10 and pin 20
  *
- * 2) bare minimum net-list, if connecting to digital I/O lines, as on a $9 CHIP
- *    computer:
+ * 2) bare minimum net-list, if connecting to digital I/O lines, as on a $9
+ *    CHIP computer:
  *          pin  3 to the RX input on the computer
  *	    for optional two-way comms, connect pin 2 to computers TX output
  *          pin 10 to gnd
@@ -60,9 +63,9 @@
  *          pin 20 to +3.3V
  *          put a .1uf cap between pin 10 and pin 20
  *
- * 3) connect IR receiver to GND and Vcc, or to pins 12 and 13.  these pins are
- *	    programmed as "low" and "high" respectively, and the 2313 GPIO pins
- *	    supply plenty of current for powering the IR receiver.
+ * 3) connect IR receiver to GND and Vcc, or to pins 12 and 13.  these pins
+ *	    are programmed as "low" and "high" respectively, and the 2313
+ *	     GPIO pinssupply plenty of current for powering the IR receiver.
  *
  * 4) if connecting the activity LED:
  *          pin 9 to to cathode (short lead or flat side) of the LED

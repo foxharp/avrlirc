@@ -166,14 +166,15 @@ typedef uint8_t byte;
 #define DO_RECEIVE 1
 
 /* if connecting to the console RX/TX on a $9 CHIP computer, there's a
- * risk that an IR sequence will cause data on the computer console
- * while it's booting, thereby halting the boot sequence.  it might
- * also "fight" with the "login:" message.  so in that case, USE_ENABLE
- * should be set to 1, and pin 7 should be pulled low by the CHIP computer
- * after the system has booted, and after the getty program (which controls
- * the login prompt) has been shut off).
+ * risk that an IR sequence will cause data to be received on the
+ * computer console while it's booting, thereby halting the boot
+ * sequence.  after booting, that data might also "fight" with the
+ * "login:" message.  so in that use case, USE_ENABLE should be set to
+ * 1, and pin 7 should be pulled low by the CHIP computer after the
+ * system has booted, and after the getty program (which controls the
+ * login prompt) has been disabled off).
  */
-#define USE_ENABLE 1
+#define USE_ENABLE 0
 
 /*
  * speed selection

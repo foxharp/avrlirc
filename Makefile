@@ -32,6 +32,9 @@ OBJS = avrlirc.o
 VERSION = $(shell date +%y%m%d-%H%M)
 CFLAGS += -DAVRLIRC_VERSION="\"$(VERSION)\""
 
+MACH = broom
+PROG_SSH = ssh -t $(MACH)
+
 
 all: $(PROG).hex $(PROG).lss avrlirc2udp airboard-ir
 
@@ -98,13 +101,34 @@ tarball: all clean
 	mv ../avrlirc-$(VERSION).tar.gz .
 	rm -f ../avrlirc-$(VERSION)
 
-program:
-	scp avrlirc.hex broom:/tmp
-	ssh -t broom sudo avrdude -p t2313 -c usbtiny -U /tmp/avrlirc.hex  -E noreset
-#	sudo avrdude -p t2313 -c usbtiny -U avrlirc.hex  -E noreset
+program:  # locally
+	sudo avrdude -p t2313 -c usbtiny -U avrlirc.hex -E noreset
+
+remote_program:
+	scp avrlirc.hex $(MACH):/tmp
+	$(PROG_SSH) sudo avrdude -p t2313 -c usbtiny -E noreset \
+		-U /tmp/avrlirc.hex
 
 bod_fuses:  # brown-out detection
-	sudo avrdude -p t2313 -c usbtiny -U lfuse:w:0x64:m -U hfuse:w:0xd7:m -E noreset
+	$(PROG_SSH) sudo avrdude -p t2313 -c usbtiny -E noreset \
+		-U lfuse:w:0x64:m \
+		-U hfuse:w:0xdb:m   # 2.7V
+
+#		-U hfuse:w:0xdf:m   # brown-out detection disabled
+#		-U hfuse:w:0xdd:m   # 1.8V
+#		-U hfuse:w:0xdb:m   # 2.7V
+#		-U hfuse:w:0xd9:m   # 4.3V
+
+
+default_fuses:  # 2313 like new from the factory
+	$(PROG_SSH) sudo avrdude -p t2313 -c usbtiny -E noreset \
+		-U lfuse:w:0x64:m \
+		-U hfuse:w:0xdf:m
+
+read_fuses:
+	$(PROG_SSH) sudo avrdude -p t2313 -c usbtiny -E noreset \
+		-U lfuse:r::m \
+		-U hfuse:r::m
 
 clean:
 	rm -f *.o *.flash *.flash.* *.out *.map *.lst *.lss

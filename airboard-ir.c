@@ -1398,7 +1398,7 @@ key_desc_t keys[NUM_KEYS] = {
     { 0x5fea0, "key_z",         KEY_Z,          0 },
     { 0x60ede, "home",          KEY_HOME,       0 },
     { 0x61edc, "tab",           KEY_TAB,        0 },
-    { 0x62eda, "key_f1",        KEY_F1, 0 },
+    { 0x62eda, "f1",            KEY_F1, 0 },
     { 0x63ed8, "key_c",         KEY_C,          0 },
     { 0x64ed6, "r_ctrl",        KEY_RIGHTCTRL,  0 },
     { 0x65ed4, "repeatcode",    0,              TYPE_REPEAT },

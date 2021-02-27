@@ -4,7 +4,7 @@
  * airboard.c, based on avrlirc2udp.c
  *
  * the latest copy of this program is probably available here:
- * http://tinyurl.com/airboard-ir  (leads to sourceforge CVS)
+ * https://github.com/foxharp/avrlirc
  *
  * this daemon accepts infrared (IR) data from an Airboard
  * keyboard, also known as an SK-7100, made by Silitek, or
@@ -141,7 +141,8 @@ usage(void)
         "    '-d' for debugging (repeate for more verbosity).\n"
         "    '-X' don't forward any IR commands or keystrokes (for debug).\n"
         " (%s requires root privileges if -a or -r is used.)\n"
-        , me, me);
+	" This is airboard-ir version %s\n"
+        , me, me, VERSION);
     exit(1);
 }
 
